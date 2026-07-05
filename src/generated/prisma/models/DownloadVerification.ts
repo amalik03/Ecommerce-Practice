@@ -151,7 +151,7 @@ export type DownloadVerificationGroupByOutputType = {
   _max: DownloadVerificationMaxAggregateOutputType | null
 }
 
-type GetDownloadVerificationGroupByPayload<T extends DownloadVerificationGroupByArgs> = Prisma.PrismaPromise<
+export type GetDownloadVerificationGroupByPayload<T extends DownloadVerificationGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<DownloadVerificationGroupByOutputType, T['by']> &
       {
