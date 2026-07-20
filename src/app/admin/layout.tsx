@@ -1,5 +1,7 @@
 import { Nav, NavLink } from "@/components/Nav";
 
+export const dynamic = "force-dynamic"; // forcing JS not to cache any of the admin pages
+
 export default function AdminLayout({
   children,
 }: Readonly<{

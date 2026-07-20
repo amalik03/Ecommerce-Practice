@@ -13,14 +13,41 @@ async function getSalesData() {
     _sum: { pricePaidInCents: true },
     _count: true,
   });
+
   return {
     amount: (data._sum.pricePaidInCents || 0) / 100,
     numberOfSales: data._count,
   };
 }
 
+async function getUserData() {
+  // awaiting it all together instead of one at a time, this provides better performance
+  const [userCount, orderData] = await Promise.all([
+    db.user.count(),
+    db.order.aggregate({ _sum: { pricePaidInCents: true } }),
+  ]);
+  return {
+    userCount,
+    averageValuePerUser:
+      userCount === 0 ? 0 : (orderData._sum.pricePaidInCents || 0) / userCount / 100,
+    // dividing by 100 to convert from pennies to dollars
+  };
+}
+
+async function getProductData() {
+  const [activeCount, inactiveCount] = await Promise.all([
+    db.product.count({ where: { isAvailableForPurchase: true } }),
+    db.product.count({ where: { isAvailableForPurchase: false } }),
+  ]);
+
+  return { activeCount, inactiveCount };
+}
 export default async function AdminDashboard() {
-  const salesData = await getSalesData();
+  const [salesData, userData, productData] = await Promise.all([
+    await getSalesData(),
+    await getUserData(),
+    await getProductData(),
+  ]);
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <DashboardCard
@@ -28,8 +55,16 @@ export default async function AdminDashboard() {
         subtitle={`${formatNumber(salesData.numberOfSales)} Orders`}
         body={formatCurrency(salesData.amount)}
       />
-      <DashboardCard title="Sales" subtitle="test" body="body" />
-      <DashboardCard title="Sales" subtitle="test" body="body" />
+      <DashboardCard
+        title="Customers"
+        subtitle={`${formatCurrency(userData.averageValuePerUser)} Average Value`}
+        body={formatNumber(userData.userCount)}
+      />
+      <DashboardCard
+        title="Active Products"
+        subtitle={`${formatNumber(productData.inactiveCount)} Inactive`}
+        body={formatNumber(productData.activeCount)}
+      />
     </div>
   );
 }
